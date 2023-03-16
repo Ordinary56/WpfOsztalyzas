@@ -13,7 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
+using System.Collections.ObjectModel;
+using Microsoft.Win32;
 namespace WpfOsztalyzas
 {
     /// <summary>
@@ -23,25 +24,61 @@ namespace WpfOsztalyzas
     {
         string fajlNev = "naplo.txt";
         //Így minden metódus fogja tudni használni.
-        List<Osztalyzat> jegyek = new List<Osztalyzat>();
+        ObservableCollection<Osztalyzat> jegyek = new ObservableCollection<Osztalyzat>();
 
         public MainWindow()
         {
             InitializeComponent();
-            // todo Fájlok kitallózásával tegye lehetővé a naplófájl kiválasztását!
+            // todo Fájlok kitallózásával tegye lehetővé a naplófájl kiválasztását! (KÉSZ)
             // Ha nem választ ki semmit, akkor "naplo.csv" legyen az állomány neve. A későbbiekben ebbe fog rögzíteni a program.
-
-            // todo A kiválasztott naplót egyből töltse be és a tartalmát jelenítse meg a datagrid-ben!
+            OpenFileDialog ofd = new OpenFileDialog();
+          
+            if ((bool)ofd.ShowDialog()! && ofd.FileName.EndsWith(".csv"))
+            {
+                fajlNev = ofd.FileName;
+            }
+            using(StreamReader sr = new StreamReader(fajlNev))
+            {
+                while(!sr.EndOfStream)
+                {
+                    string[] currentSplit = sr.ReadLine()!.Split(";");
+                    jegyek.Add(new Osztalyzat(currentSplit[0], 
+                        currentSplit[1],
+                        currentSplit[2],
+                        Convert.ToInt32(currentSplit[^1])));
+                }
+            }
+            // todo A kiválasztott naplót egyből töltse be és a tartalmát jelenítse meg a datagrid-ben! (KÉSZ)
+            dgJegyek.ItemsSource = jegyek;
+            FilePath_txt.Text = fajlNev;
+            Grades_txt.Text = $"Jegyek száma: {jegyek.Count()}, Jegyek átlaga: {jegyek.Average(x => x.Jegy):.0}";
         }
 
         private void btnRogzit_Click(object sender, RoutedEventArgs e)
         {
-            //todo Ne lehessen rögzíteni, ha a következők valamelyike nem teljesül!
-            // a) - A név legalább két szóból álljon és szavanként minimum 3 karakterből!
-            //      Szó = A szöközökkel határolt karaktersorozat.
-            // b) - A beírt dátum újabb, mint a mai dátum
-
-            //todo A rögzítés mindig az aktuálisan megnyitott naplófájlba történjen!
+            
+            string[] splittedName = txtNev.Text.Split(" ");
+            if (splittedName.Count() == 1)
+            {
+                MessageBox.Show("A névnek minimum 2 szóból kell állnia","NameError",MessageBoxButton.OK,MessageBoxImage.Error);
+                return;
+            }
+            if(Array.FindAll(splittedName,x => x.Count() < 3).ToArray().Count() >0)
+            {
+                MessageBox.Show("A névnek szavanként minimum 3 karakterből kell állnia", 
+                    "ShortNameError",
+                    MessageBoxButton.OK, 
+                    MessageBoxImage.Error);
+                return;
+            }
+            if(DateTime.Compare(datDatum.SelectedDate!.Value,DateTime.Now) > 0) 
+            {
+                MessageBox.Show("Nem lehet jövőbeli dátum!",
+                    "DateError",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            //todo A rögzítés mindig az aktuálisan megnyitott naplófájlba történjen! (KÉSZ)
 
 
             //A CSV szerkezetű fájlba kerülő sor előállítása
@@ -50,7 +87,13 @@ namespace WpfOsztalyzas
             StreamWriter sw = new StreamWriter(fajlNev, append: true);
             sw.WriteLine(csvSor);
             sw.Close();
-            //todo Az újonnan felvitt jegy is jelenjen meg a datagrid-ben!
+            //todo Az újonnan felvitt jegy is jelenjen meg a datagrid-ben! (KÉSZ)
+            jegyek.Add(new Osztalyzat(txtNev.Text,
+                datDatum.Text,
+                cboTantargy.Text,
+                Convert.ToInt32(sliJegy.Value)));
+            Grades_txt.Text = $"Jegyek száma: {jegyek.Count()}, Jegyek átlaga: {jegyek.Average(x => x.Jegy):.0}";
+
         }
 
         private void btnBetolt_Click(object sender, RoutedEventArgs e)
@@ -59,7 +102,7 @@ namespace WpfOsztalyzas
             StreamReader sr = new StreamReader(fajlNev); //olvasásra nyitja az állományt
             while (!sr.EndOfStream) //amíg nem ér a fájl végére
             {
-                string[] mezok = sr.ReadLine().Split(";"); //A beolvasott sort feltördeli mezőkre
+                string[] mezok = sr.ReadLine()!.Split(";"); //A beolvasott sort feltördeli mezőkre
                 //A mezők értékeit felhasználva létrehoz egy objektumot
                 Osztalyzat ujJegy = new Osztalyzat(mezok[0], mezok[1], mezok[2], int.Parse(mezok[3])); 
                 jegyek.Add(ujJegy); //Az objektumot a lista végére helyezi
@@ -70,14 +113,16 @@ namespace WpfOsztalyzas
             //A lista objektumokat tartalmaz. Az objektumok lesznek a rács sorai.
             //Az objektum nyilvános tulajdonságai kerülnek be az oszlopokba.
             dgJegyek.ItemsSource = jegyek;
+            Grades_txt.Text = $"Jegyek száma: {jegyek.Count()}, Jegyek átlaga: {jegyek.Average(x => x.Jegy):.0}";
         }
 
-        private void sliJegy_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            lblJegy.Content = sliJegy.Value; //Több alternatíva van e helyett! Legjobb a Data Binding!
-        }
+        //Data Binding segítségével csináltam meg a feladatot, szóval ez a kódrészlet haszontalan
+        //private void sliJegy_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        //{
+        //   lblJegy.Content = sliJegy.Value; //Több alternatíva van e helyett! Legjobb a Data Binding!
+        //}
 
-        //todo Felület bővítése: Az XAML átszerkesztésével biztosítsa, hogy láthatóak legyenek a következők!
+        //todo Felület bővítése: Az XAML átszerkesztésével biztosítsa, hogy láthatóak legyenek a következők! (KÉSZ)
         // - A naplófájl neve
         // - A naplóban lévő jegyek száma
         // - Az átlag
@@ -90,6 +135,15 @@ namespace WpfOsztalyzas
         //A feladat megoldásához használja fel a ForditottNev metódust!
         //Módosíthatja az osztályban a Nev property hozzáférhetőségét!
         //Megjegyzés: Felételezzük, hogy csak 2 tagú nevek vannak
+
+        private void SwapName(object? sender, RoutedEventArgs e)
+        {
+            foreach(Osztalyzat osztalyzat in  jegyek)
+            {
+                osztalyzat.ForditottNev();
+            }
+            dgJegyek.Items.Refresh();
+        }
     }
 }
 

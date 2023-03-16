@@ -18,6 +18,8 @@
             <RowDefinition/>
             <RowDefinition/>
             <RowDefinition Height="5*"/>
+            <RowDefinition/>
+            <RowDefinition/>
         </Grid.RowDefinitions>
         <!-- Első sor - név -->
         <Label Content="Neve:" VerticalAlignment="Center"/>
@@ -53,7 +55,7 @@
         <StackPanel Grid.Row="3" Orientation="Horizontal" VerticalAlignment="Center">
             <Label Content="Jegy:" VerticalAlignment="Center"/>
             <Label x:Name="lblJegy" FontSize="16" 
-                   Content="5"
+                   Content="{Binding ElementName=sliJegy, Path=Value, Mode=OneWay}"
                    FontWeight="DemiBold" Foreground="Red"/>
         </StackPanel>
         
@@ -61,7 +63,7 @@
                 Margin="10"
                 Grid.Row="3" Grid.Column="1" VerticalAlignment="Center"
                 Minimum="1" Maximum="5" Value="5"
-                TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="sliJegy_ValueChanged"/>
+                TickFrequency="1" IsSnapToTickEnabled="True"/>
 
         <!-- 5. sor - nyomógombok -->
         <Button x:Name="btnNaploBetoltese" 
@@ -78,5 +80,30 @@
         <DataGrid x:Name="dgJegyek" Grid.Row="5" Grid.ColumnSpan="2"
                   Margin="4"
                   Background="LightGreen"/>
+        
+        <!-- 7.sor - Rádiógombok -->
+
+        <StackPanel Orientation="Horizontal" Grid.Row="6" 
+                    Grid.ColumnSpan="2" 
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top">
+            <TextBlock x:Name="FilePath_txt"
+                       Text="" 
+                       HorizontalAlignment="Left" 
+                       VerticalAlignment="Top"/>
+            <TextBlock x:Name="Grades_txt"
+                       Text="Jegyek száma: Átlag: " 
+                       HorizontalAlignment="Right" 
+                       VerticalAlignment="Top"
+                       Margin="15 0 0 0"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal"
+                    Grid.Row="7" Grid.ColumnSpan="2"
+                    VerticalAlignment="Top"
+                    HorizontalAlignment="Center">
+            <RadioButton Content="Vezetéknév->Keresztnév" IsChecked="True" Checked="SwapName"/>
+            <RadioButton Content="Keresztnév->Vezetéknév"
+                         Margin="15 0 0 0" Checked="SwapName"/>
+        </StackPanel>
     </Grid>
 </Window>
